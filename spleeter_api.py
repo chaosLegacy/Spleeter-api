@@ -11,7 +11,6 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from spleeter.separator import Separator
-import tempfile
 import uuid
 import logging
 
@@ -127,6 +126,8 @@ def separate_audio():
     
     # Generate unique job ID
     job_id = str(uuid.uuid4())
+    input_path = None
+    job_output_dir = os.path.join(OUTPUT_FOLDER, job_id)
     
     try:
         # Save uploaded file
@@ -137,7 +138,6 @@ def separate_audio():
         logger.info(f"Processing file: {filename} with model: {model}")
         
         # Create output directory for this job
-        job_output_dir = os.path.join(OUTPUT_FOLDER, job_id)
         os.makedirs(job_output_dir, exist_ok=True)
         
         # Get separator
@@ -151,7 +151,7 @@ def separate_audio():
             bitrate='320k' if output_format == 'mp3' else None
         )
         
-        # Find the output directory (Spleeter creates a subdirectory with the input filename)
+        # Find the output directory
         base_name = Path(filename).stem
         stem_dir = os.path.join(job_output_dir, base_name)
         
@@ -174,7 +174,8 @@ def separate_audio():
                 })
         
         # Clean up input file
-        os.remove(input_path)
+        if input_path and os.path.exists(input_path):
+            os.remove(input_path)
         
         logger.info(f"Separation completed. Job ID: {job_id}, Stems: {len(stems)}")
         
@@ -191,7 +192,7 @@ def separate_audio():
         logger.error(f"Error processing file: {str(e)}")
         
         # Clean up on error
-        if os.path.exists(input_path):
+        if input_path and os.path.exists(input_path):
             os.remove(input_path)
         if os.path.exists(job_output_dir):
             shutil.rmtree(job_output_dir)
@@ -206,13 +207,11 @@ def separate_audio():
 def download_stem(job_id, stem_name):
     """Download a specific stem"""
     
-    # Find the stem file
     job_output_dir = os.path.join(OUTPUT_FOLDER, job_id)
     
     if not os.path.exists(job_output_dir):
         return jsonify({'error': 'Job not found'}), 404
     
-    # Search for the file in subdirectories
     for root, dirs, files in os.walk(job_output_dir):
         for file in files:
             if file.startswith(stem_name) and (file.endswith('.mp3') or file.endswith('.wav')):
@@ -268,7 +267,6 @@ def index():
 
 
 if __name__ == '__main__':
-    # Run Flask app
     app.run(
         host='0.0.0.0',
         port=5000,
