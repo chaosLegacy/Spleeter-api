@@ -1,4 +1,4 @@
-FROM researchdeezer/spleeter:3.7-gpu
+FROM researchdeezer/spleeter:conda-5stems
 
 # Set working directory
 WORKDIR /app
