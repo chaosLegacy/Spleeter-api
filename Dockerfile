@@ -1,4 +1,4 @@
-FROM researchdeezer/spleeter:3.8
+FROM researchdeezer/spleeter:3.7-gpu
 
 # Set working directory
 WORKDIR /app
