@@ -25,10 +25,11 @@ RUN pip install --no-cache-dir \
     --retries 5 \
     tensorflow==2.9.3
 
-# Install remaining dependencies
+# Install Spleeter and compatible Flask version
+# Flask 2.3.x is compatible with click<8.0 (which typer needs)
 RUN pip install --no-cache-dir \
     spleeter==2.4.0 \
-    flask==3.0.0 \
+    flask==2.3.3 \
     flask-cors==4.0.0
 
 # Copy application code
